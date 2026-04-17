@@ -5,6 +5,7 @@
   "description": "Prisma database client and schema for Finance Manager",
   "main": "index.ts",
   "scripts": {
+    "postinstall": "prisma generate",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
     "migrate:prod": "prisma migrate deploy",

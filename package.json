@@ -4,6 +4,7 @@
   "private": true,
   "description": "Production-grade personal finance management application",
   "scripts": {
+    "prebuild": "pnpm --filter=@finance-app/db run generate",
     "dev": "pnpm --parallel -r run dev",
     "web": "pnpm --filter=@finance-app/web dev",
     "api": "pnpm --filter=@finance-app/api dev",
@@ -14,8 +15,8 @@
     "lint": "pnpm --parallel -r run lint",
     "type-check": "pnpm --parallel -r run type-check",
     "clean": "pnpm --parallel -r run clean",
-    "db:migrate": "pnpm --filter=@finance-app/db prisma migrate dev",
-    "db:generate": "pnpm --filter=@finance-app/db prisma generate",
+    "db:migrate": "pnpm --filter=@finance-app/db run migrate",
+    "db:generate": "pnpm --filter=@finance-app/db run generate",
     "db:studio": "pnpm --filter=@finance-app/db prisma studio"
   },
   "workspaces": [
