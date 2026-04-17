@@ -1,0 +1,36 @@
+{
+  "name": "finance-manager-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade personal finance management application",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "web": "pnpm --filter=@finance-app/web dev",
+    "api": "pnpm --filter=@finance-app/api dev",
+    "build": "pnpm --parallel -r run build",
+    "test": "pnpm --parallel -r run test",
+    "test:unit": "pnpm --parallel -r run test:unit",
+    "test:integration": "pnpm --parallel -r run test:integration",
+    "lint": "pnpm --parallel -r run lint",
+    "type-check": "pnpm --parallel -r run type-check",
+    "clean": "pnpm --parallel -r run clean",
+    "db:migrate": "pnpm --filter=@finance-app/db prisma migrate dev",
+    "db:generate": "pnpm --filter=@finance-app/db prisma generate",
+    "db:studio": "pnpm --filter=@finance-app/db prisma studio"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "prettier": "^3.0.0",
+    "eslint": "^8.50.0"
+  },
+  "packageManager": "pnpm@8.7.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

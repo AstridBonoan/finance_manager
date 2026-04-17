@@ -1,0 +1,444 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================
+// Authentication Models
+// ========================
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  emailVerified         DateTime?
+  name                  String?
+  image                 String?
+  passwordHash          String?
+  
+  // Subscription
+  subscriptionTier      String    @default("free") // free, pro, enterprise
+  stripeCustomerId      String?   @unique
+  
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  transactions          Transaction[]
+  categories            Category[]
+  budgets               Budget[]
+  budgetAllocations     BudgetAllocation[]
+  receipts              Receipt[]
+  stripeCustomer        StripeCustomer?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ========================
+// Financial Models
+// ========================
+
+model Category {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  description       String?
+  color             String   @default("#6B7280")
+  icon              String?  // Emoji or icon name
+  isSystem          Boolean  @default(false) // System categories: salary, groceries, etc
+  order             Int      @default(0)
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      Transaction[]
+  budgetAllocations BudgetAllocation[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  userId            String
+  amount            Decimal  @db.Decimal(12, 2)
+  description       String
+  date              DateTime
+  type              String   // "income" or "expense"
+  
+  categoryId        String?
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  receiptId         String?
+  receipt           Receipt?  @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+  
+  notes             String?
+  tags              String[]  @default([])
+  isRecurring       Boolean   @default(false)
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([date])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+model Receipt {
+  id                String   @id @default(cuid())
+  userId            String
+  
+  // File storage
+  filePath          String   // S3 path
+  fileName          String
+  mimeType          String
+  fileSize          Int
+  
+  // OCR Data
+  rawText           String?  @db.Text
+  parsedData        Json?    // { items: [...], total, date, merchant }
+  confidence        Float    @default(0.0) // 0-1 confidence score
+  status            String   @default("pending") // pending, parsed, reviewed, error
+  errorMessage      String?
+  
+  // Associations
+  transactions      Transaction[]
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("receipts")
+}
+
+// ========================
+// Budget Models
+// ========================
+
+model Budget {
+  id                String   @id @default(cuid())
+  userId            String
+  
+  // Time period
+  month             Int      // 1-12
+  year              Int
+  
+  // Income
+  totalIncome       Decimal  @db.Decimal(12, 2)
+  
+  // Allocation rules (stored as JSON)
+  rules             Json     // { savings: 0.2, necessities: 0.5, ... }
+  
+  allocations       BudgetAllocation[]
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@map("budgets")
+}
+
+model BudgetAllocation {
+  id                String   @id @default(cuid())
+  budgetId          String
+  
+  categoryId        String
+  category          Category @relation(fields: [categoryId], references: [id])
+  
+  // Amounts
+  allocatedAmount   Decimal  @db.Decimal(12, 2)
+  actualSpent       Decimal  @db.Decimal(12, 2) @default(0)
+  percentOfIncome   Float?   // Used for percentage-based allocations
+  
+  // Status
+  isOverBudget      Boolean  @default(false)
+  overageAmount     Decimal  @db.Decimal(12, 2) @default(0)
+  
+  budget            Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([budgetId, categoryId])
+  @@index([budgetId])
+  @@map("budget_allocations")
+}
+
+// ========================
+// Financial Memory Models
+// ========================
+
+model SpendingBaseline {
+  id                String   @id @default(cuid())
+  userId            String
+  categoryId        String
+  
+  // Baseline metrics
+  averageMonthly    Decimal  @db.Decimal(12, 2)
+  minMonthly        Decimal  @db.Decimal(12, 2)
+  maxMonthly        Decimal  @db.Decimal(12, 2)
+  stdDeviation      Decimal  @db.Decimal(12, 2)
+  
+  // Data points
+  dataPointCount    Int      @default(0)
+  lastCalculated    DateTime @default(now())
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, categoryId])
+  @@index([userId])
+  @@map("spending_baselines")
+}
+
+model SpendingTrend {
+  id                String   @id @default(cuid())
+  userId            String
+  categoryId        String?  // null = overall spending
+  
+  // Trend data
+  month             Int
+  year              Int
+  amount            Decimal  @db.Decimal(12, 2)
+  percentChange     Float?   // From previous month
+  trendDirection    String   // "up", "down", "stable"
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([year, month])
+  @@map("spending_trends")
+}
+
+model Anomaly {
+  id                String   @id @default(cuid())
+  userId            String
+  categoryId        String?
+  transactionId     String?
+  
+  // Anomaly details
+  type              String   // "unusual_amount", "unusual_frequency", "new_merchant"
+  severity          String   // "low", "medium", "high"
+  description       String
+  
+  // Metrics
+  expectedAmount    Decimal? @db.Decimal(12, 2)
+  actualAmount      Decimal? @db.Decimal(12, 2)
+  deviationPercent  Float?
+  
+  // Status
+  isReviewed        Boolean  @default(false)
+  userFeedback      String?  // "normal", "flag", "ignore"
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([severity])
+  @@map("anomalies")
+}
+
+// ========================
+// AI & Advisor Models
+// ========================
+
+model AdvisorConversation {
+  id                String   @id @default(cuid())
+  userId            String
+  
+  title             String?
+  topic             String?
+  
+  messages          AdvisorMessage[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@map("advisor_conversations")
+}
+
+model AdvisorMessage {
+  id                String   @id @default(cuid())
+  conversationId    String
+  
+  role              String   // "user" or "assistant"
+  content           String   @db.Text
+  
+  // Context used for this message
+  contextSnapshot   Json?    // Cached user financial data used
+  
+  createdAt         DateTime @default(now())
+
+  conversation      AdvisorConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("advisor_messages")
+}
+
+model Insight {
+  id                String   @id @default(cuid())
+  userId            String
+  
+  // Insight details
+  type              String   // "spending_pattern", "savings_opportunity", "budget_alert"
+  title             String
+  description       String   @db.Text
+  category          String?
+  
+  // Data
+  metric            String?
+  metricValue       Decimal? @db.Decimal(12, 2)
+  previousValue     Decimal? @db.Decimal(12, 2)
+  
+  // Recommendation
+  recommendation    String?  @db.Text
+  actionUrl         String?  // Deep link to take action
+  
+  // Status
+  isViewed          Boolean  @default(false)
+  isDismissed       Boolean  @default(false)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isViewed])
+  @@map("insights")
+}
+
+// ========================
+// Stripe Models
+// ========================
+
+model StripeCustomer {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  stripeCustomerId  String   @unique
+  
+  // Subscription info
+  subscriptionId    String?
+  subscriptionStatus String? // "active", "past_due", "canceled", "unpaid"
+  planId            String?
+  currentPeriodEnd  DateTime?
+  
+  // Metadata
+  lastUpdated       DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([stripeCustomerId])
+  @@map("stripe_customers")
+}
+
+model Invoice {
+  id                String   @id @default(cuid())
+  userId            String
+  stripeInvoiceId   String   @unique
+  
+  // Invoice details
+  amount            Decimal  @db.Decimal(12, 2)
+  currency          String   @default("usd")
+  status            String   // "draft", "open", "paid", "void", "uncollectible"
+  
+  // Dates
+  invoiceDate       DateTime
+  dueDate           DateTime?
+  paidAt            DateTime?
+  
+  // Content
+  description       String?
+  receiptUrl        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("invoices")
+}
+
+// ========================
+// Audit & Logging Models
+// ========================
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  userId            String?
+  action            String   // "create", "update", "delete", "view"
+  entity            String   // "transaction", "budget", "receipt"
+  entityId          String
+  changes           Json?    // { field: { old: value, new: value } }
+  ipAddress         String?
+  userAgent         String?
+  
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
