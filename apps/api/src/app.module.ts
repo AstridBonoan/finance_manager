@@ -7,6 +7,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
+import { ReceiptsModule } from './modules/receipts/receipts.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AllocationsModule } from './modules/allocations/allocations.module';
     AnalyticsModule,
     BudgetsModule,
     AllocationsModule,
+    ReceiptsModule,
   ],
 })
 export class AppModule {}
