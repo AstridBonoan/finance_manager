@@ -8,3 +8,23 @@ import { ReceiptController } from './receipts.controller';
   exports: [ReceiptService],
 })
 export class ReceiptsModule {}
+import { Module } from '@nestjs/common';
+import { ReceiptService } from './receipts.service';
+import { ReceiptController } from './receipts.controller';
+
+@Module({
+  controllers: [ReceiptController],
+  providers: [ReceiptService],
+  exports: [ReceiptService],
+})
+export class ReceiptsModule {}
+import { Module } from '@nestjs/common';
+import { ReceiptService } from './receipts.service';
+import { ReceiptController } from './receipts.controller';
+
+@Module({
+  controllers: [ReceiptController],
+  providers: [ReceiptService],
+  exports: [ReceiptService],
+})
+export class ReceiptsModule {}
