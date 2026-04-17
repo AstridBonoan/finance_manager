@@ -85,15 +85,15 @@ describe('CategoriesService', () => {
       const endDate = new Date('2026-01-31');
 
       const result = [
-        { categoryId: 'cat-1', name: 'Groceries', totalSpent: 500, transactionCount: 10 },
-        { categoryId: 'cat-2', name: 'Dining', totalSpent: 200, transactionCount: 5 },
+        { categoryId: 'cat-1', name: 'Groceries', icon: '🛒', color: '#f59e0b', spent: 500 },
+        { categoryId: 'cat-2', name: 'Dining', icon: '🍔', color: '#d97706', spent: 200 },
       ];
 
       jest.spyOn(service, 'getStats').mockResolvedValue(result as any);
 
       const stats = await service.getStats(userId, startDate, endDate);
       expect(stats).toHaveLength(2);
-      expect(stats[0].totalSpent).toBe(500);
+      expect(stats[0].spent).toBe(500);
     });
   });
 });
