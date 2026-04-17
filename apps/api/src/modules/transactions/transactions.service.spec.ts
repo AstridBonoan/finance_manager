@@ -44,6 +44,8 @@ describe('TransactionsService', () => {
         date: new Date(),
         type: 'expense' as const,
         categoryId: 'cat-123',
+        tags: [],
+        isRecurring: false,
       };
 
       const result = { id: 'tx-123', userId, ...data };
@@ -58,7 +60,7 @@ describe('TransactionsService', () => {
   describe('findAll', () => {
     it('should return paginated transactions', async () => {
       const userId = 'user-123';
-      const filters = { page: 1, pageSize: 20 };
+      const filters = { skip: 0, take: 20 };
 
       const result = {
         items: [
