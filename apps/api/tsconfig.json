@@ -20,7 +20,9 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@finance-app/shared": ["../../packages/shared/src/index.ts"],
+      "@finance-app/shared/*": ["../../packages/shared/src/*"]
     }
   }
 }

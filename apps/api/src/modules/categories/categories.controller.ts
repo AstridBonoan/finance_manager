@@ -8,11 +8,15 @@ import {
   Param,
   Query,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategorySchema } from '@finance-app/shared';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('categories')
+@UseGuards(JwtAuthGuard)
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
@@ -21,12 +25,8 @@ export class CategoriesController {
    * POST /categories/defaults
    */
   @Post('defaults')
-  async createDefaults(@Query('userId') userId: string) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.categoriesService.createDefaults(userId);
+  async createDefaults(@CurrentUser() user: AuthenticatedUser) {
+    return await this.categoriesService.createDefaults(user.id);
   }
 
   /**
@@ -36,15 +36,11 @@ export class CategoriesController {
   @Post()
   async create(
     @Body() body: any,
-    @Query('userId') userId: string
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
     try {
       const validatedData = CreateCategorySchema.parse(body);
-      return await this.categoriesService.create(userId, validatedData);
+      return await this.categoriesService.create(user.id, validatedData);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -55,12 +51,8 @@ export class CategoriesController {
    * GET /categories
    */
   @Get()
-  async findAll(@Query('userId') userId: string) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.categoriesService.findAll(userId);
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
+    return await this.categoriesService.findAll(user.id);
   }
 
   /**
@@ -70,13 +62,9 @@ export class CategoriesController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Query('userId') userId: string
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.categoriesService.findOne(userId, id);
+    return await this.categoriesService.findOne(user.id, id);
   }
 
   /**
@@ -87,13 +75,9 @@ export class CategoriesController {
   async update(
     @Param('id') id: string,
     @Body() body: any,
-    @Query('userId') userId: string
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.categoriesService.update(userId, id, body);
+    return await this.categoriesService.update(user.id, id, body);
   }
 
   /**
@@ -103,13 +87,9 @@ export class CategoriesController {
   @Delete(':id')
   async delete(
     @Param('id') id: string,
-    @Query('userId') userId: string
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.categoriesService.delete(userId, id);
+    return await this.categoriesService.delete(user.id, id);
   }
 
   /**
@@ -118,16 +98,16 @@ export class CategoriesController {
    */
   @Get('stats/byDateRange')
   async getStats(
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string
   ) {
-    if (!userId || !startDate || !endDate) {
-      throw new BadRequestException('userId, startDate, and endDate are required');
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate and endDate are required');
     }
 
     return await this.categoriesService.getStats(
-      userId,
+      user.id,
       new Date(startDate),
       new Date(endDate)
     );

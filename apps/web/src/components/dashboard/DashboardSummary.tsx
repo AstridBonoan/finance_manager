@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { apiFetch } from '@/lib/api';
 
 interface DashboardData {
   totalIncome: number;
@@ -33,14 +34,11 @@ export function DashboardSummary({ userId }: { userId: string }) {
       try {
         const now = new Date();
         const queryParams = new URLSearchParams({
-          userId,
           month: String(now.getMonth() + 1),
           year: String(now.getFullYear()),
         });
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/dashboard?${queryParams}`
-        );
+        const response = await apiFetch(`/analytics/dashboard?${queryParams}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch dashboard data');

@@ -1,7 +1,10 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, BadRequestException, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('analytics')
+@UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
@@ -11,16 +14,12 @@ export class AnalyticsController {
    */
   @Get('dashboard')
   async getDashboardSummary(
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('month') month?: string,
     @Query('year') year?: string
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
     return await this.analyticsService.getDashboardSummary(
-      userId,
+      user.id,
       month ? parseInt(month) : undefined,
       year ? parseInt(year) : undefined
     );
@@ -32,14 +31,10 @@ export class AnalyticsController {
    */
   @Get('trend')
   async getSpendingTrend(
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('months') months: string = '6'
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-
-    return await this.analyticsService.getSpendingTrend(userId, parseInt(months));
+    return await this.analyticsService.getSpendingTrend(user.id, parseInt(months));
   }
 
   /**
@@ -48,16 +43,16 @@ export class AnalyticsController {
    */
   @Get('categories')
   async getCategoryAnalytics(
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string
   ) {
-    if (!userId || !startDate || !endDate) {
-      throw new BadRequestException('userId, startDate, and endDate are required');
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate and endDate are required');
     }
 
     return await this.analyticsService.getCategoryAnalytics(
-      userId,
+      user.id,
       new Date(startDate),
       new Date(endDate)
     );
@@ -69,16 +64,16 @@ export class AnalyticsController {
    */
   @Get('income-vs-expense')
   async getIncomeVsExpense(
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string
   ) {
-    if (!userId || !startDate || !endDate) {
-      throw new BadRequestException('userId, startDate, and endDate are required');
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate and endDate are required');
     }
 
     return await this.analyticsService.getIncomeVsExpense(
-      userId,
+      user.id,
       new Date(startDate),
       new Date(endDate)
     );

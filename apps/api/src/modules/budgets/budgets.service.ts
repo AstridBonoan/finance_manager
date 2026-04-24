@@ -32,12 +32,15 @@ export class BudgetsService {
   /**
    * Create allocation for a budget category
    */
-  async createBudget(dto: CreateBudgetDto) {
+  async createBudget(dto: CreateBudgetDto, requesterUserId: string) {
     // Get budget to get userId
     const budget = await prisma.budget.findUniqueOrThrow({
       where: { id: dto.budgetId },
       select: { userId: true },
     });
+    if (budget.userId !== requesterUserId) {
+      throw new Error('Unauthorized');
+    }
 
     const allocation = await prisma.budgetAllocation.create({
       data: {

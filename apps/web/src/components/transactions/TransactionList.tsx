@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface Transaction {
   id: string;
@@ -33,15 +34,12 @@ export function TransactionList({ userId, refreshTrigger }: TransactionListProps
       try {
         setLoading(true);
         const params = new URLSearchParams({
-          userId,
           page: String(filters.page),
           pageSize: '20',
           ...(filters.type !== 'all' && { type: filters.type }),
         });
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/transactions?${params}`
-        );
+        const response = await apiFetch(`/transactions?${params}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch transactions');
@@ -67,12 +65,9 @@ export function TransactionList({ userId, refreshTrigger }: TransactionListProps
     }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/transactions/${transactionId}?userId=${userId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await apiFetch(`/transactions/${transactionId}`, {
+        method: 'DELETE',
+      });
 
       if (!response.ok) {
         throw new Error('Failed to delete transaction');

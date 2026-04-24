@@ -8,10 +8,14 @@ import {
   Param,
   Query,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { BudgetsService, CreateBudgetDto, UpdateBudgetDto, BudgetProgress } from './budgets.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('budgets')
+@UseGuards(JwtAuthGuard)
 export class BudgetsController {
   constructor(private readonly budgetsService: BudgetsService) {}
 
@@ -20,8 +24,11 @@ export class BudgetsController {
    * Create a new budget allocation
    */
   @Post()
-  async createBudget(@Body() createBudgetDto: CreateBudgetDto) {
-    return this.budgetsService.createBudget(createBudgetDto);
+  async createBudget(
+    @Body() createBudgetDto: CreateBudgetDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.budgetsService.createBudget(createBudgetDto, user.id);
   }
 
   /**
@@ -31,9 +38,9 @@ export class BudgetsController {
   @Get()
   async listBudgets(
     @Query('budgetId') budgetId: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<BudgetProgress[]> {
-    return this.budgetsService.listBudgets(budgetId, userId);
+    return this.budgetsService.listBudgets(budgetId, user.id);
   }
 
   /**
@@ -43,9 +50,9 @@ export class BudgetsController {
   @Get('summary')
   async getBudgetSummary(
     @Query('budgetId') budgetId: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.budgetsService.getBudgetSummary(budgetId, userId);
+    return this.budgetsService.getBudgetSummary(budgetId, user.id);
   }
 
   /**
@@ -55,9 +62,9 @@ export class BudgetsController {
   @Get(':id')
   async getBudget(
     @Param('id') allocationId: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<BudgetProgress> {
-    return this.budgetsService.getBudget(allocationId, userId);
+    return this.budgetsService.getBudget(allocationId, user.id);
   }
 
   /**
@@ -67,10 +74,10 @@ export class BudgetsController {
   @Patch(':id')
   async updateBudget(
     @Param('id') allocationId: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() updateBudgetDto: UpdateBudgetDto,
   ): Promise<BudgetProgress> {
-    return this.budgetsService.updateBudget(allocationId, userId, updateBudgetDto);
+    return this.budgetsService.updateBudget(allocationId, user.id, updateBudgetDto);
   }
 
   /**
@@ -81,8 +88,8 @@ export class BudgetsController {
   @HttpCode(200)
   async deleteBudget(
     @Param('id') budgetId: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.budgetsService.deleteBudget(budgetId, userId);
+    return this.budgetsService.deleteBudget(budgetId, user.id);
   }
 }

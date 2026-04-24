@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface Category {
   id: string;
@@ -31,9 +32,7 @@ export function TransactionForm({ userId, onSuccess }: TransactionFormProps) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/categories?userId=${userId}`
-        );
+        const response = await apiFetch('/categories');
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
         setCategories(data);
@@ -69,23 +68,17 @@ export function TransactionForm({ userId, onSuccess }: TransactionFormProps) {
         throw new Error('Description and amount are required');
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/transactions?userId=${userId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            description: formData.description,
-            amount: parseFloat(formData.amount),
-            date: new Date(formData.date),
-            type: formData.type,
-            categoryId: formData.categoryId || null,
-            notes: formData.notes,
-          }),
-        }
-      );
+      const response = await apiFetch('/transactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          date: new Date(formData.date),
+          type: formData.type,
+          categoryId: formData.categoryId || null,
+          notes: formData.notes,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
