@@ -4,6 +4,17 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
 
+export interface SpendingHabit {
+  key: string;
+  description: string;
+  categoryId: string | null;
+  categoryName: string;
+  occurrenceCount: number;
+  averageAmount: number;
+  lastSeenAt: Date;
+  cadence: 'weekly' | 'biweekly' | 'monthly' | 'irregular';
+}
+
 @Injectable()
 export class FinancialMemoryService {
   async recalculateBaselines(userId: string) {
@@ -231,6 +242,84 @@ export class FinancialMemoryService {
     }
 
     return created;
+  }
+
+  async getHabits(userId: string): Promise<SpendingHabit[]> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 120);
+
+    const expenses = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'expense',
+        date: { gte: cutoff },
+      },
+      include: {
+        category: {
+          select: { name: true },
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    const grouped = new Map<string, typeof expenses>();
+    for (const tx of expenses) {
+      const normalizedDescription = tx.description.trim().toLowerCase();
+      const key = `${tx.categoryId || 'uncategorized'}:${normalizedDescription}`;
+      const bucket = grouped.get(key);
+      if (bucket) {
+        bucket.push(tx);
+      } else {
+        grouped.set(key, [tx]);
+      }
+    }
+
+    const habits: SpendingHabit[] = [];
+    for (const [key, txns] of grouped.entries()) {
+      if (txns.length < 3) {
+        continue;
+      }
+
+      const intervals: number[] = [];
+      for (let i = 1; i < txns.length; i++) {
+        const diffMs = txns[i].date.getTime() - txns[i - 1].date.getTime();
+        intervals.push(diffMs / (1000 * 60 * 60 * 24));
+      }
+      const avgInterval = intervals.length
+        ? intervals.reduce((sum, value) => sum + value, 0) / intervals.length
+        : 999;
+
+      const cadence: SpendingHabit['cadence'] =
+        avgInterval <= 9
+          ? 'weekly'
+          : avgInterval <= 18
+            ? 'biweekly'
+            : avgInterval <= 40
+              ? 'monthly'
+              : 'irregular';
+
+      const averageAmount =
+        txns.reduce((sum, tx) => sum + Number(tx.amount), 0) / txns.length;
+
+      const lastTxn = txns[txns.length - 1];
+      habits.push({
+        key,
+        description: lastTxn.description,
+        categoryId: lastTxn.categoryId,
+        categoryName: lastTxn.category?.name || 'Uncategorized',
+        occurrenceCount: txns.length,
+        averageAmount,
+        lastSeenAt: lastTxn.date,
+        cadence,
+      });
+    }
+
+    return habits.sort((a, b) => {
+      if (a.cadence === b.cadence) {
+        return b.occurrenceCount - a.occurrenceCount;
+      }
+      return a.cadence.localeCompare(b.cadence);
+    });
   }
 }
 

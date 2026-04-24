@@ -303,8 +303,11 @@
 - Implemented anomaly retrieval + detection endpoints:
   - `GET /financial-memory/anomalies`
   - `POST /financial-memory/anomalies/detect`
+- Implemented habit detection endpoint:
+  - `GET /financial-memory/habits`
 - Implemented baseline-driven anomaly detection (`unusual_amount`)
 - Implemented monthly spending trend generation with month-over-month delta
+- Implemented cadence classification for recurring spending habits (weekly/biweekly/monthly/irregular)
 
 ---
 
@@ -333,8 +336,8 @@
 | 1 | 1 | 100% | 🟢 COMPLETE |
 | 2 | 2 | 100% | 🟢 COMPLETE |
 | 3 | 3 | 100% | 🟢 COMPLETE |
-| 4 | 4 | 0% | 🟡 IN PROGRESS |
-| 5 | 5 | 0% | ⚪ Pending |
+| 4 | 4 | 100% | 🟢 COMPLETE |
+| 5 | 5 | 45% | 🟡 IN PROGRESS |
 | 6 | 6 | 0% | ⚪ Pending |
 | 7 | 7 | 0% | ⚪ Pending |
 

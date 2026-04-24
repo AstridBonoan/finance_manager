@@ -52,5 +52,11 @@ export class FinancialMemoryController {
     const anomalies = await this.financialMemoryService.detectAnomalies(user.id);
     return { success: true, count: anomalies.length, anomalies };
   }
+
+  @Get('habits')
+  async getHabits(@CurrentUser() user: AuthenticatedUser) {
+    const habits = await this.financialMemoryService.getHabits(user.id);
+    return { success: true, count: habits.length, habits };
+  }
 }
 
