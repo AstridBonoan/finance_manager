@@ -34,8 +34,16 @@ interface MemorySummary {
   generatedAt: string;
 }
 
+interface MemoryStatus {
+  baselineCount: number;
+  trendCount: number;
+  anomalyCount: number;
+  lastMemoryCalculationAt: string | null;
+}
+
 export function FinancialMemoryPanel({ userId }: { userId: string }) {
   const [summary, setSummary] = useState<MemorySummary | null>(null);
+  const [status, setStatus] = useState<MemoryStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [reviewingAnomalyId, setReviewingAnomalyId] = useState<string | null>(null);
@@ -43,10 +51,16 @@ export function FinancialMemoryPanel({ userId }: { userId: string }) {
 
   const loadSummary = async () => {
     try {
-      const response = await apiFetch('/financial-memory/summary');
-      if (!response.ok) throw new Error('Failed to load financial memory summary');
-      const result = await response.json();
-      setSummary(result.summary);
+      const [summaryResponse, statusResponse] = await Promise.all([
+        apiFetch('/financial-memory/summary'),
+        apiFetch('/financial-memory/status'),
+      ]);
+      if (!summaryResponse.ok) throw new Error('Failed to load financial memory summary');
+      if (!statusResponse.ok) throw new Error('Failed to load financial memory status');
+      const summaryResult = await summaryResponse.json();
+      const statusResult = await statusResponse.json();
+      setSummary(summaryResult.summary);
+      setStatus(statusResult.status);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -109,6 +123,13 @@ export function FinancialMemoryPanel({ userId }: { userId: string }) {
           {refreshing ? 'Refreshing...' : 'Refresh Memory'}
         </button>
       </div>
+
+      <p className="text-xs text-gray-500">
+        Last calculated:{' '}
+        {status?.lastMemoryCalculationAt
+          ? new Date(status.lastMemoryCalculationAt).toLocaleString()
+          : 'Never'}
+      </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <Stat label="Baselines" value={summary.baselineCount} />

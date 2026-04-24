@@ -314,10 +314,13 @@
   - `GET /financial-memory/summary`
 - Implemented full memory refresh endpoint:
   - `POST /financial-memory/refresh`
+- Implemented memory operational status endpoint:
+  - `GET /financial-memory/status`
 - Integrated Financial Memory panel into dashboard UI:
   - Added summary stats and top habits display
   - Added refresh action wired to backend memory pipeline
   - Added anomaly review controls (normal/flag/ignore) directly in dashboard panel
+  - Added last memory calculation timestamp display
 - Implemented baseline-driven anomaly detection (`unusual_amount`)
 - Implemented monthly spending trend generation with month-over-month delta
 - Implemented cadence classification for recurring spending habits (weekly/biweekly/monthly/irregular)
@@ -353,7 +356,7 @@
 | 2 | 2 | 100% | 🟢 COMPLETE |
 | 3 | 3 | 100% | 🟢 COMPLETE |
 | 4 | 4 | 100% | 🟢 COMPLETE |
-| 5 | 5 | 95% | 🟡 IN PROGRESS |
+| 5 | 5 | 100% | 🟢 COMPLETE |
 | 6 | 6 | 0% | ⚪ Pending |
 | 7 | 7 | 0% | ⚪ Pending |
 
