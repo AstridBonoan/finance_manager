@@ -265,8 +265,11 @@ Use this section for ongoing updates.
 - Continued Sprint 5 implementation:
   - Added trend generation endpoint (`POST /financial-memory/trends/generate`)
   - Added anomaly detection endpoint (`POST /financial-memory/anomalies/detect`)
+  - Added spending habit detection endpoint (`GET /financial-memory/habits`)
   - Implemented baseline-driven `unusual_amount` anomaly creation
   - Implemented month-over-month trend persistence logic
+  - Implemented recurring spend cadence classification (weekly/biweekly/monthly/irregular)
 - CI/GitHub Actions alignment:
   - Added missing API script used by workflow: `type-check`
+  - Added API tsconfig path mappings so CI type-check resolves `@finance-app/shared` without requiring prebuilt shared dist
 
