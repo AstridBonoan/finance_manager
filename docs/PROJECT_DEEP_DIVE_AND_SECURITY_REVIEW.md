@@ -271,6 +271,7 @@ Use this section for ongoing updates.
   - Added consolidated memory summary endpoint for downstream consumers (`GET /financial-memory/summary`)
   - Added end-to-end refresh endpoint to run memory pipeline (`POST /financial-memory/refresh`)
   - Added dashboard-level Financial Memory panel to expose summary/habit insights in UI
+  - Added dashboard anomaly review actions wired to backend feedback endpoint
   - Implemented baseline-driven `unusual_amount` anomaly creation
   - Implemented month-over-month trend persistence logic
   - Implemented recurring spend cadence classification (weekly/biweekly/monthly/irregular)
