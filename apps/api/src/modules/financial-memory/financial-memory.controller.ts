@@ -8,6 +8,12 @@ import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.
 export class FinancialMemoryController {
   constructor(private readonly financialMemoryService: FinancialMemoryService) {}
 
+  private parseMonths(months: string): number {
+    const parsed = parseInt(months, 10);
+    if (Number.isNaN(parsed)) return 6;
+    return Math.max(1, Math.min(parsed, 24));
+  }
+
   @Post('baselines/recalculate')
   async recalculateBaselines(@CurrentUser() user: AuthenticatedUser) {
     const baselines = await this.financialMemoryService.recalculateBaselines(user.id);
@@ -25,7 +31,7 @@ export class FinancialMemoryController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('months') months: string = '6',
   ) {
-    const trends = await this.financialMemoryService.getTrends(user.id, parseInt(months, 10));
+    const trends = await this.financialMemoryService.getTrends(user.id, this.parseMonths(months));
     return { success: true, trends };
   }
 
@@ -48,7 +54,7 @@ export class FinancialMemoryController {
   ) {
     const trends = await this.financialMemoryService.generateSpendingTrends(
       user.id,
-      parseInt(months, 10),
+      this.parseMonths(months),
     );
     return { success: true, count: trends.length, trends };
   }
@@ -70,7 +76,7 @@ export class FinancialMemoryController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('months') months: string = '6',
   ) {
-    const trends = await this.financialMemoryService.getCategoryTrends(user.id, parseInt(months, 10));
+    const trends = await this.financialMemoryService.getCategoryTrends(user.id, this.parseMonths(months));
     return { success: true, count: trends.length, trends };
   }
 
@@ -81,7 +87,7 @@ export class FinancialMemoryController {
   ) {
     const trends = await this.financialMemoryService.generateCategoryTrends(
       user.id,
-      parseInt(months, 10),
+      this.parseMonths(months),
     );
     return { success: true, count: trends.length, trends };
   }
