@@ -266,6 +266,8 @@ Use this section for ongoing updates.
   - Added trend generation endpoint (`POST /financial-memory/trends/generate`)
   - Added anomaly detection endpoint (`POST /financial-memory/anomalies/detect`)
   - Added spending habit detection endpoint (`GET /financial-memory/habits`)
+  - Added category trend retrieval/generation endpoints
+  - Added anomaly review feedback endpoint (`normal|flag|ignore`)
   - Implemented baseline-driven `unusual_amount` anomaly creation
   - Implemented month-over-month trend persistence logic
   - Implemented recurring spend cadence classification (weekly/biweekly/monthly/irregular)

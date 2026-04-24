@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { FinancialMemoryService } from './financial-memory.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -53,10 +53,44 @@ export class FinancialMemoryController {
     return { success: true, count: anomalies.length, anomalies };
   }
 
+  @Get('trends/categories')
+  async getCategoryTrends(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('months') months: string = '6',
+  ) {
+    const trends = await this.financialMemoryService.getCategoryTrends(user.id, parseInt(months, 10));
+    return { success: true, count: trends.length, trends };
+  }
+
+  @Post('trends/categories/generate')
+  async generateCategoryTrends(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('months') months: string = '6',
+  ) {
+    const trends = await this.financialMemoryService.generateCategoryTrends(
+      user.id,
+      parseInt(months, 10),
+    );
+    return { success: true, count: trends.length, trends };
+  }
+
   @Get('habits')
   async getHabits(@CurrentUser() user: AuthenticatedUser) {
     const habits = await this.financialMemoryService.getHabits(user.id);
     return { success: true, count: habits.length, habits };
+  }
+
+  @Post('anomalies/:id/review')
+  async reviewAnomaly(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('feedback') feedback: 'normal' | 'flag' | 'ignore',
+  ) {
+    if (!['normal', 'flag', 'ignore'].includes(feedback)) {
+      throw new BadRequestException('feedback must be one of: normal, flag, ignore');
+    }
+    const anomaly = await this.financialMemoryService.reviewAnomaly(user.id, id, feedback);
+    return { success: true, anomaly };
   }
 }
 
