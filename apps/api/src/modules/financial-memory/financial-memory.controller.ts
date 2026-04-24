@@ -35,6 +35,12 @@ export class FinancialMemoryController {
     return { success: true, anomalies };
   }
 
+  @Get('summary')
+  async getMemorySummary(@CurrentUser() user: AuthenticatedUser) {
+    const summary = await this.financialMemoryService.getMemorySummary(user.id);
+    return { success: true, summary };
+  }
+
   @Post('trends/generate')
   async generateTrends(
     @CurrentUser() user: AuthenticatedUser,
@@ -51,6 +57,12 @@ export class FinancialMemoryController {
   async detectAnomalies(@CurrentUser() user: AuthenticatedUser) {
     const anomalies = await this.financialMemoryService.detectAnomalies(user.id);
     return { success: true, count: anomalies.length, anomalies };
+  }
+
+  @Post('refresh')
+  async refreshMemory(@CurrentUser() user: AuthenticatedUser) {
+    const result = await this.financialMemoryService.refreshMemory(user.id);
+    return { success: true, ...result };
   }
 
   @Get('trends/categories')
