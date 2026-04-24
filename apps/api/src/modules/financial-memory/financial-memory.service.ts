@@ -15,6 +15,8 @@ export interface SpendingHabit {
   cadence: 'weekly' | 'biweekly' | 'monthly' | 'irregular';
 }
 
+type AnomalyFeedback = 'normal' | 'flag' | 'ignore';
+
 @Injectable()
 export class FinancialMemoryService {
   async recalculateBaselines(userId: string) {
@@ -187,6 +189,99 @@ export class FinancialMemoryService {
     return generated;
   }
 
+  async generateCategoryTrends(userId: string, months: number = 6) {
+    const boundedMonths = Math.max(1, Math.min(months, 24));
+    const now = new Date();
+    const categories = await prisma.category.findMany({
+      where: { userId },
+      select: { id: true, name: true },
+    });
+
+    const generated = [];
+    for (const category of categories) {
+      for (let i = boundedMonths - 1; i >= 0; i--) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const startDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+        const endDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59);
+        const prevStart = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
+        const prevEnd = new Date(monthDate.getFullYear(), monthDate.getMonth(), 0, 23, 59, 59);
+
+        const [currentTotal, previousTotal] = await Promise.all([
+          prisma.transaction.aggregate({
+            where: {
+              userId,
+              categoryId: category.id,
+              type: 'expense',
+              date: { gte: startDate, lte: endDate },
+            },
+            _sum: { amount: true },
+          }),
+          prisma.transaction.aggregate({
+            where: {
+              userId,
+              categoryId: category.id,
+              type: 'expense',
+              date: { gte: prevStart, lte: prevEnd },
+            },
+            _sum: { amount: true },
+          }),
+        ]);
+
+        const currentAmount = Number(currentTotal._sum.amount || 0);
+        const previousAmount = Number(previousTotal._sum.amount || 0);
+        const percentChange =
+          previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null;
+        const trendDirection =
+          percentChange === null
+            ? 'stable'
+            : percentChange > 5
+              ? 'up'
+              : percentChange < -5
+                ? 'down'
+                : 'stable';
+
+        const existing = await prisma.spendingTrend.findFirst({
+          where: {
+            userId,
+            year: monthDate.getFullYear(),
+            month: monthDate.getMonth() + 1,
+            categoryId: category.id,
+          },
+          select: { id: true },
+        });
+
+        const trend = existing
+          ? await prisma.spendingTrend.update({
+              where: { id: existing.id },
+              data: {
+                amount: new Decimal(currentAmount),
+                percentChange: percentChange ?? undefined,
+                trendDirection,
+              },
+            })
+          : await prisma.spendingTrend.create({
+              data: {
+                userId,
+                categoryId: category.id,
+                year: monthDate.getFullYear(),
+                month: monthDate.getMonth() + 1,
+                amount: new Decimal(currentAmount),
+                percentChange: percentChange ?? undefined,
+                trendDirection,
+              },
+            });
+
+        generated.push({
+          categoryId: category.id,
+          categoryName: category.name,
+          trend,
+        });
+      }
+    }
+
+    return generated;
+  }
+
   async detectAnomalies(userId: string) {
     const baselines = await prisma.spendingBaseline.findMany({ where: { userId } });
     const baselineMap = new Map<string, { avg: number; std: number }>(
@@ -242,6 +337,39 @@ export class FinancialMemoryService {
     }
 
     return created;
+  }
+
+  async reviewAnomaly(
+    userId: string,
+    anomalyId: string,
+    feedback: AnomalyFeedback,
+  ) {
+    const anomaly = await prisma.anomaly.findFirst({
+      where: { id: anomalyId, userId },
+      select: { id: true },
+    });
+    if (!anomaly) {
+      throw new Error('Anomaly not found');
+    }
+
+    return prisma.anomaly.update({
+      where: { id: anomalyId },
+      data: {
+        isReviewed: true,
+        userFeedback: feedback,
+      },
+    });
+  }
+
+  async getCategoryTrends(userId: string, months: number = 6) {
+    return prisma.spendingTrend.findMany({
+      where: {
+        userId,
+        categoryId: { not: null },
+      },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      take: Math.max(1, Math.min(months * 20, 240)),
+    });
   }
 
   async getHabits(userId: string): Promise<SpendingHabit[]> {
