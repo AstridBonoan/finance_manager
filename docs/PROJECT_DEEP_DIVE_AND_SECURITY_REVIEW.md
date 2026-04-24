@@ -270,8 +270,10 @@ Use this section for ongoing updates.
   - Added anomaly review feedback endpoint (`normal|flag|ignore`)
   - Added consolidated memory summary endpoint for downstream consumers (`GET /financial-memory/summary`)
   - Added end-to-end refresh endpoint to run memory pipeline (`POST /financial-memory/refresh`)
+  - Added memory status endpoint for ops visibility (`GET /financial-memory/status`)
   - Added dashboard-level Financial Memory panel to expose summary/habit insights in UI
   - Added dashboard anomaly review actions wired to backend feedback endpoint
+  - Added dashboard display of last memory calculation time
   - Added bounded months parsing and baseline minimum sample threshold for stability
   - Implemented baseline-driven `unusual_amount` anomaly creation
   - Implemented month-over-month trend persistence logic

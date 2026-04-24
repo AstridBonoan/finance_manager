@@ -19,6 +19,27 @@ type AnomalyFeedback = 'normal' | 'flag' | 'ignore';
 
 @Injectable()
 export class FinancialMemoryService {
+  async getMemoryStatus(userId: string) {
+    const [baselineCount, trendCount, anomalyCount] = await Promise.all([
+      prisma.spendingBaseline.count({ where: { userId } }),
+      prisma.spendingTrend.count({ where: { userId } }),
+      prisma.anomaly.count({ where: { userId } }),
+    ]);
+
+    const latestBaseline = await prisma.spendingBaseline.findFirst({
+      where: { userId },
+      orderBy: { lastCalculated: 'desc' },
+      select: { lastCalculated: true },
+    });
+
+    return {
+      baselineCount,
+      trendCount,
+      anomalyCount,
+      lastMemoryCalculationAt: latestBaseline?.lastCalculated || null,
+    };
+  }
+
   async refreshMemory(userId: string) {
     const baselines = await this.recalculateBaselines(userId);
     await this.generateSpendingTrends(userId, 6);

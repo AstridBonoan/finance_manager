@@ -47,6 +47,12 @@ export class FinancialMemoryController {
     return { success: true, summary };
   }
 
+  @Get('status')
+  async getMemoryStatus(@CurrentUser() user: AuthenticatedUser) {
+    const status = await this.financialMemoryService.getMemoryStatus(user.id);
+    return { success: true, status };
+  }
+
   @Post('trends/generate')
   async generateTrends(
     @CurrentUser() user: AuthenticatedUser,
