@@ -8,6 +8,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
+import { FinancialMemoryModule } from './modules/financial-memory/financial-memory.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ReceiptsModule } from './modules/receipts/receipts.module';
     BudgetsModule,
     AllocationsModule,
     ReceiptsModule,
+    FinancialMemoryModule,
   ],
 })
 export class AppModule {}

@@ -1,9 +1,6 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 
 interface AllocationRule {
@@ -40,7 +37,6 @@ export function AllocationDashboard({
   isLoading = false,
 }: AllocationDashboardProps) {
   const totalRulePercentage = rules.reduce((sum, r) => sum + r.percentage, 0);
-  const totalRecommendedPercentage = recommendations.reduce((sum, r) => sum + r.percentage, 0);
 
   return (
     <div className="space-y-6">

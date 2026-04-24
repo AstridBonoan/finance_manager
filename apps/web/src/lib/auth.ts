@@ -5,10 +5,19 @@ declare module 'next-auth' {
   interface User {
     id: string;
     email: string;
+    accessToken?: string;
   }
 
   interface Session {
     user: User;
+    accessToken?: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id?: string;
+    accessToken?: string;
   }
 }
 
@@ -45,8 +54,9 @@ export const authOptions: NextAuthOptions = {
 
           const data = await response.json();
           return {
-            id: data.userId,
-            email: data.email,
+            id: data.user.id,
+            email: data.user.email,
+            accessToken: data.access_token,
           };
         } catch (error) {
           throw new Error('Authentication failed');
@@ -64,6 +74,7 @@ export const authOptions: NextAuthOptions = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.accessToken = user.accessToken;
       }
       return token;
     },
@@ -71,6 +82,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
       }
+      session.accessToken = token.accessToken as string | undefined;
       return session;
     },
   },

@@ -23,12 +23,6 @@ interface BudgetWidgetProps {
   isLoading?: boolean;
 }
 
-function getStatusColor(percentage: number): string {
-  if (percentage >= 100) return 'bg-red-500';
-  if (percentage >= 80) return 'bg-yellow-500';
-  return 'bg-green-500';
-}
-
 function getStatusLabel(percentage: number): string {
   if (percentage >= 100) return 'Over Budget';
   if (percentage >= 80) return 'Warning';

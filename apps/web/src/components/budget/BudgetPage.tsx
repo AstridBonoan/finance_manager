@@ -61,8 +61,6 @@ interface BudgetPageProps {
 }
 
 export function BudgetPage({
-  budgetId,
-  userId,
   month,
   year,
   totalIncome,

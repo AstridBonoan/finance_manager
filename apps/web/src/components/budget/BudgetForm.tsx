@@ -112,7 +112,7 @@ export function BudgetForm({
           {/* Category Selector */}
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.categoryId} onValueChange={(value) => {
+            <Select value={formData.categoryId} onValueChange={(value: string) => {
               setFormData({ ...formData, categoryId: value });
               setErrors({ ...errors, categoryId: undefined });
             }}>
@@ -149,7 +149,7 @@ export function BudgetForm({
                 min="0"
                 placeholder="0.00"
                 value={formData.amount || ''}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 });
                   setErrors({ ...errors, amount: undefined });
                 }}
@@ -176,7 +176,7 @@ export function BudgetForm({
                 max="100"
                 placeholder="0.0"
                 value={formData.percentOfIncome || ''}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setFormData({
                     ...formData,
                     percentOfIncome: e.target.value ? parseFloat(e.target.value) : undefined,

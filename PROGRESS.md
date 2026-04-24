@@ -288,8 +288,23 @@
 **Goal:** Build behavioral tracking intelligence.
 
 ### Sprint 5: Spending Intelligence
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 **Tasks:** Baselines, habit detection, trends, anomalies
+
+**✅ Completed in this session:**
+- Added `FinancialMemoryModule` to backend and registered in `AppModule`
+- Implemented baseline recalculation endpoint:
+  - `POST /financial-memory/baselines/recalculate`
+- Implemented baseline retrieval endpoint:
+  - `GET /financial-memory/baselines`
+- Implemented trend retrieval + generation endpoints:
+  - `GET /financial-memory/trends`
+  - `POST /financial-memory/trends/generate`
+- Implemented anomaly retrieval + detection endpoints:
+  - `GET /financial-memory/anomalies`
+  - `POST /financial-memory/anomalies/detect`
+- Implemented baseline-driven anomaly detection (`unusual_amount`)
+- Implemented monthly spending trend generation with month-over-month delta
 
 ---
 
@@ -365,3 +380,9 @@
   - Branch protection rules configured
   - All tests passing, builds successful
   - Ready to begin Sprint 3: Budget Engine
+**2026-04-24 14:00** - Security hardening + Sprint 5 kickoff ✅
+  - Backend auth hardened (JWT guards + server-derived user identity)
+  - Protected primary APIs against client-supplied `userId` trust
+  - Receipts controller fixed to use authenticated user context
+  - Frontend API integration updated to send bearer tokens
+  - Sprint 5 module created with baseline/trend/anomaly endpoints

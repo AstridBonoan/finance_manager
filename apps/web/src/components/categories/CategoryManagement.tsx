@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface Category {
   id: string;
@@ -34,9 +35,7 @@ export function CategoryManagement({ userId, refreshTrigger }: CategoryManagemen
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/categories?userId=${userId}`
-        );
+        const response = await apiFetch('/categories');
 
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
@@ -58,12 +57,9 @@ export function CategoryManagement({ userId, refreshTrigger }: CategoryManagemen
 
   const handleCreateDefaults = async () => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/defaults?userId=${userId}`,
-        {
-          method: 'POST',
-        }
-      );
+      const response = await apiFetch('/categories/defaults', {
+        method: 'POST',
+      });
 
       if (!response.ok) {
         throw new Error('Failed to create default categories');
@@ -73,9 +69,7 @@ export function CategoryManagement({ userId, refreshTrigger }: CategoryManagemen
       setTimeout(() => setSuccessMessage(null), 3000);
 
       // Refetch categories
-      const categoriesResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories?userId=${userId}`
-      );
+      const categoriesResponse = await apiFetch('/categories');
       const data = await categoriesResponse.json();
       setCategories(data);
     } catch (err) {
@@ -87,16 +81,10 @@ export function CategoryManagement({ userId, refreshTrigger }: CategoryManagemen
     e.preventDefault();
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories?userId=${userId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await apiFetch('/categories', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -120,12 +108,9 @@ export function CategoryManagement({ userId, refreshTrigger }: CategoryManagemen
     }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}?userId=${userId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await apiFetch(`/categories/${categoryId}`, {
+        method: 'DELETE',
+      });
 
       if (!response.ok) {
         throw new Error('Failed to delete category');

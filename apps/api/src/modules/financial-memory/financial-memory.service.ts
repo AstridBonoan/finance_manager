@@ -1,0 +1,236 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@finance-app/db';
+import { Decimal } from '@prisma/client/runtime/library';
+
+const prisma = new PrismaClient();
+
+@Injectable()
+export class FinancialMemoryService {
+  async recalculateBaselines(userId: string) {
+    const categories = await prisma.category.findMany({
+      where: { userId },
+      select: { id: true, name: true },
+    });
+
+    const updated = [];
+
+    for (const category of categories) {
+      const txns = await prisma.transaction.findMany({
+        where: { userId, categoryId: category.id, type: 'expense' },
+        select: { amount: true },
+      });
+
+      const amounts = txns.map((t) => Number(t.amount));
+      if (amounts.length === 0) {
+        continue;
+      }
+
+      const average = amounts.reduce((sum, value) => sum + value, 0) / amounts.length;
+      const variance = amounts.reduce((sum, value) => sum + Math.pow(value - average, 2), 0) / amounts.length;
+      const stdDeviation = Math.sqrt(variance);
+
+      const baseline = await prisma.spendingBaseline.upsert({
+        where: {
+          userId_categoryId: {
+            userId,
+            categoryId: category.id,
+          },
+        },
+        create: {
+          userId,
+          categoryId: category.id,
+          averageMonthly: new Decimal(average),
+          minMonthly: new Decimal(Math.min(...amounts)),
+          maxMonthly: new Decimal(Math.max(...amounts)),
+          stdDeviation: new Decimal(stdDeviation),
+          dataPointCount: amounts.length,
+        },
+        update: {
+          averageMonthly: new Decimal(average),
+          minMonthly: new Decimal(Math.min(...amounts)),
+          maxMonthly: new Decimal(Math.max(...amounts)),
+          stdDeviation: new Decimal(stdDeviation),
+          dataPointCount: amounts.length,
+          lastCalculated: new Date(),
+        },
+      });
+
+      updated.push({
+        categoryId: category.id,
+        categoryName: category.name,
+        averageMonthly: Number(baseline.averageMonthly),
+        minMonthly: Number(baseline.minMonthly),
+        maxMonthly: Number(baseline.maxMonthly),
+        stdDeviation: Number(baseline.stdDeviation),
+        dataPointCount: baseline.dataPointCount,
+      });
+    }
+
+    return updated;
+  }
+
+  async getBaselines(userId: string) {
+    const baselines = await prisma.spendingBaseline.findMany({
+      where: { userId },
+      orderBy: { lastCalculated: 'desc' },
+    });
+
+    return baselines.map((b) => ({
+      id: b.id,
+      categoryId: b.categoryId,
+      averageMonthly: Number(b.averageMonthly),
+      minMonthly: Number(b.minMonthly),
+      maxMonthly: Number(b.maxMonthly),
+      stdDeviation: Number(b.stdDeviation),
+      dataPointCount: b.dataPointCount,
+      lastCalculated: b.lastCalculated,
+    }));
+  }
+
+  async getTrends(userId: string, months: number = 6) {
+    return prisma.spendingTrend.findMany({
+      where: { userId },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      take: Math.max(1, Math.min(months, 24)),
+    });
+  }
+
+  async getAnomalies(userId: string) {
+    return prisma.anomaly.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async generateSpendingTrends(userId: string, months: number = 6) {
+    const boundedMonths = Math.max(1, Math.min(months, 24));
+    const now = new Date();
+    const generated = [];
+
+    for (let i = boundedMonths - 1; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const startDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const endDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59);
+      const prevStart = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
+      const prevEnd = new Date(monthDate.getFullYear(), monthDate.getMonth(), 0, 23, 59, 59);
+
+      const [currentTotal, previousTotal] = await Promise.all([
+        prisma.transaction.aggregate({
+          where: { userId, type: 'expense', date: { gte: startDate, lte: endDate } },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { userId, type: 'expense', date: { gte: prevStart, lte: prevEnd } },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const currentAmount = Number(currentTotal._sum.amount || 0);
+      const previousAmount = Number(previousTotal._sum.amount || 0);
+      const percentChange =
+        previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null;
+      const trendDirection =
+        percentChange === null
+          ? 'stable'
+          : percentChange > 5
+            ? 'up'
+            : percentChange < -5
+              ? 'down'
+              : 'stable';
+
+      const existing = await prisma.spendingTrend.findFirst({
+        where: {
+          userId,
+          year: monthDate.getFullYear(),
+          month: monthDate.getMonth() + 1,
+          categoryId: null,
+        },
+        select: { id: true },
+      });
+
+      const trend = existing
+        ? await prisma.spendingTrend.update({
+            where: { id: existing.id },
+            data: {
+              amount: new Decimal(currentAmount),
+              percentChange: percentChange ?? undefined,
+              trendDirection,
+            },
+          })
+        : await prisma.spendingTrend.create({
+            data: {
+              userId,
+              categoryId: null,
+              year: monthDate.getFullYear(),
+              month: monthDate.getMonth() + 1,
+              amount: new Decimal(currentAmount),
+              percentChange: percentChange ?? undefined,
+              trendDirection,
+            },
+          });
+
+      generated.push(trend);
+    }
+
+    return generated;
+  }
+
+  async detectAnomalies(userId: string) {
+    const baselines = await prisma.spendingBaseline.findMany({ where: { userId } });
+    const baselineMap = new Map<string, { avg: number; std: number }>(
+      baselines.map((b) => [
+        b.categoryId,
+        { avg: Number(b.averageMonthly), std: Number(b.stdDeviation) || 1 },
+      ]),
+    );
+
+    const recentCutoff = new Date();
+    recentCutoff.setDate(recentCutoff.getDate() - 30);
+
+    const transactions = await prisma.transaction.findMany({
+      where: { userId, type: 'expense', date: { gte: recentCutoff }, categoryId: { not: null } },
+      select: { id: true, amount: true, categoryId: true, description: true },
+      orderBy: { date: 'desc' },
+    });
+
+    const created = [];
+    for (const tx of transactions) {
+      const baseline = tx.categoryId ? baselineMap.get(tx.categoryId) : undefined;
+      if (!baseline) continue;
+
+      const amount = Number(tx.amount);
+      const upperThreshold = baseline.avg + 2 * baseline.std;
+      if (amount <= upperThreshold) continue;
+
+      const exists = await prisma.anomaly.findFirst({
+        where: {
+          userId,
+          transactionId: tx.id,
+          type: 'unusual_amount',
+        },
+        select: { id: true },
+      });
+      if (exists) continue;
+
+      const deviationPercent = baseline.avg > 0 ? ((amount - baseline.avg) / baseline.avg) * 100 : null;
+      const anomaly = await prisma.anomaly.create({
+        data: {
+          userId,
+          categoryId: tx.categoryId,
+          transactionId: tx.id,
+          type: 'unusual_amount',
+          severity: deviationPercent && deviationPercent > 100 ? 'high' : 'medium',
+          description: `Transaction "${tx.description}" is unusually high versus baseline`,
+          expectedAmount: new Decimal(baseline.avg),
+          actualAmount: new Decimal(amount),
+          deviationPercent: deviationPercent ?? undefined,
+        },
+      });
+      created.push(anomaly);
+    }
+
+    return created;
+  }
+}
+

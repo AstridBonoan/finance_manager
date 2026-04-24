@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+
 
 interface ExtractedData {
   vendor?: string;
@@ -121,7 +122,7 @@ export function ReceiptDetail({
           </Card>
 
           {/* Items */}
-          {hasItems && (
+          {hasItems && extractedData.items && extractedData.items.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Items</CardTitle>

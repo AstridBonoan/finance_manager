@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser, AuthenticatedUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -12,13 +14,12 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
-    // Will be implemented with Auth.js
-    return { message: 'Login handled via Auth.js' };
+    return this.authService.login(body.email, body.password);
   }
 
   @Get('profile')
-  async getProfile() {
-    // Will require JWT guard
-    return { message: 'User profile endpoint' };
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.validateUser(user.id);
   }
 }
