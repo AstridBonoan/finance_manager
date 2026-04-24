@@ -272,6 +272,7 @@ Use this section for ongoing updates.
   - Added end-to-end refresh endpoint to run memory pipeline (`POST /financial-memory/refresh`)
   - Added dashboard-level Financial Memory panel to expose summary/habit insights in UI
   - Added dashboard anomaly review actions wired to backend feedback endpoint
+  - Added bounded months parsing and baseline minimum sample threshold for stability
   - Implemented baseline-driven `unusual_amount` anomaly creation
   - Implemented month-over-month trend persistence logic
   - Implemented recurring spend cadence classification (weekly/biweekly/monthly/irregular)

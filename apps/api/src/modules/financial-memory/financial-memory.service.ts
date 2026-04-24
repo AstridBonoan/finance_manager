@@ -74,7 +74,8 @@ export class FinancialMemoryService {
       });
 
       const amounts = txns.map((t) => Number(t.amount));
-      if (amounts.length === 0) {
+      // Require at least 3 points so baseline values are meaningful.
+      if (amounts.length < 3) {
         continue;
       }
 
