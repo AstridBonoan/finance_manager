@@ -19,6 +19,46 @@ type AnomalyFeedback = 'normal' | 'flag' | 'ignore';
 
 @Injectable()
 export class FinancialMemoryService {
+  async refreshMemory(userId: string) {
+    const baselines = await this.recalculateBaselines(userId);
+    await this.generateSpendingTrends(userId, 6);
+    await this.generateCategoryTrends(userId, 6);
+    const anomalies = await this.detectAnomalies(userId);
+    const summary = await this.getMemorySummary(userId);
+
+    return {
+      baselineUpdates: baselines.length,
+      newAnomalies: anomalies.length,
+      summary,
+    };
+  }
+
+  async getMemorySummary(userId: string) {
+    const [baselines, trends, habits, anomalies] = await Promise.all([
+      this.getBaselines(userId),
+      this.getTrends(userId, 6),
+      this.getHabits(userId),
+      this.getAnomalies(userId),
+    ]);
+
+    const unresolvedAnomalies = anomalies.filter((a) => !a.isReviewed);
+    const highSeverityAnomalies = anomalies.filter((a) => a.severity === 'high');
+    const recurringHabits = habits.filter((h) => h.cadence !== 'irregular');
+
+    return {
+      baselineCount: baselines.length,
+      trendCount: trends.length,
+      habitCount: habits.length,
+      anomalyCount: anomalies.length,
+      unresolvedAnomalyCount: unresolvedAnomalies.length,
+      highSeverityAnomalyCount: highSeverityAnomalies.length,
+      recurringHabitCount: recurringHabits.length,
+      topHabits: habits.slice(0, 5),
+      recentAnomalies: anomalies.slice(0, 5),
+      generatedAt: new Date(),
+    };
+  }
+
   async recalculateBaselines(userId: string) {
     const categories = await prisma.category.findMany({
       where: { userId },

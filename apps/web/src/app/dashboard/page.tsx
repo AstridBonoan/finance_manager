@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { DashboardSummary } from '@/components/dashboard/DashboardSummary';
+import { FinancialMemoryPanel } from '@/components/dashboard/FinancialMemoryPanel';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { CategoryManagement } from '@/components/categories/CategoryManagement';
@@ -72,6 +73,7 @@ export default function DashboardPage() {
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
             <DashboardSummary userId={userId} />
+            <FinancialMemoryPanel userId={userId} />
           </div>
         )}
 

@@ -310,6 +310,13 @@
   - `POST /financial-memory/trends/categories/generate`
 - Implemented anomaly review endpoint:
   - `POST /financial-memory/anomalies/:id/review?feedback=normal|flag|ignore`
+- Implemented memory summary endpoint for dashboard/AI consumption:
+  - `GET /financial-memory/summary`
+- Implemented full memory refresh endpoint:
+  - `POST /financial-memory/refresh`
+- Integrated Financial Memory panel into dashboard UI:
+  - Added summary stats and top habits display
+  - Added refresh action wired to backend memory pipeline
 - Implemented baseline-driven anomaly detection (`unusual_amount`)
 - Implemented monthly spending trend generation with month-over-month delta
 - Implemented cadence classification for recurring spending habits (weekly/biweekly/monthly/irregular)
@@ -342,7 +349,7 @@
 | 2 | 2 | 100% | 🟢 COMPLETE |
 | 3 | 3 | 100% | 🟢 COMPLETE |
 | 4 | 4 | 100% | 🟢 COMPLETE |
-| 5 | 5 | 65% | 🟡 IN PROGRESS |
+| 5 | 5 | 85% | 🟡 IN PROGRESS |
 | 6 | 6 | 0% | ⚪ Pending |
 | 7 | 7 | 0% | ⚪ Pending |
 
