@@ -12,6 +12,15 @@ interface Habit {
   cadence: 'weekly' | 'biweekly' | 'monthly' | 'irregular';
 }
 
+interface Anomaly {
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  isReviewed: boolean;
+  userFeedback?: 'normal' | 'flag' | 'ignore' | null;
+}
+
 interface MemorySummary {
   baselineCount: number;
   trendCount: number;
@@ -21,6 +30,7 @@ interface MemorySummary {
   highSeverityAnomalyCount: number;
   recurringHabitCount: number;
   topHabits: Habit[];
+  recentAnomalies: Anomaly[];
   generatedAt: string;
 }
 
@@ -28,6 +38,7 @@ export function FinancialMemoryPanel({ userId }: { userId: string }) {
   const [summary, setSummary] = useState<MemorySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [reviewingAnomalyId, setReviewingAnomalyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadSummary = async () => {
@@ -54,6 +65,25 @@ export function FinancialMemoryPanel({ userId }: { userId: string }) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const reviewAnomaly = async (
+    anomalyId: string,
+    feedback: 'normal' | 'flag' | 'ignore',
+  ) => {
+    setReviewingAnomalyId(anomalyId);
+    try {
+      const response = await apiFetch(
+        `/financial-memory/anomalies/${anomalyId}/review?feedback=${feedback}`,
+        { method: 'POST' },
+      );
+      if (!response.ok) throw new Error('Failed to submit anomaly feedback');
+      await loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setReviewingAnomalyId(null);
     }
   };
 
@@ -104,6 +134,61 @@ export function FinancialMemoryPanel({ userId }: { userId: string }) {
                 <span className="font-medium text-gray-900">
                   {habit.occurrenceCount}x | ${habit.averageAmount.toFixed(2)}
                 </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold text-gray-700 mb-2">Recent Anomalies</h4>
+        {summary.recentAnomalies.length === 0 ? (
+          <p className="text-sm text-gray-500">No anomalies detected.</p>
+        ) : (
+          <div className="space-y-2">
+            {summary.recentAnomalies.map((anomaly) => (
+              <div key={anomaly.id} className="border rounded p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{anomaly.description}</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {anomaly.type} • severity: {anomaly.severity}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      anomaly.isReviewed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}
+                  >
+                    {anomaly.isReviewed ? `Reviewed (${anomaly.userFeedback || 'n/a'})` : 'Needs review'}
+                  </span>
+                </div>
+
+                {!anomaly.isReviewed && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => reviewAnomaly(anomaly.id, 'normal')}
+                      disabled={reviewingAnomalyId === anomaly.id}
+                      className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                    >
+                      Mark Normal
+                    </button>
+                    <button
+                      onClick={() => reviewAnomaly(anomaly.id, 'flag')}
+                      disabled={reviewingAnomalyId === anomaly.id}
+                      className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                    >
+                      Flag
+                    </button>
+                    <button
+                      onClick={() => reviewAnomaly(anomaly.id, 'ignore')}
+                      disabled={reviewingAnomalyId === anomaly.id}
+                      className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    >
+                      Ignore
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
