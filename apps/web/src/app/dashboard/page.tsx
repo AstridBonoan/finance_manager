@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { DashboardSummary } from '@/components/dashboard/DashboardSummary';
 import { FinancialMemoryPanel } from '@/components/dashboard/FinancialMemoryPanel';
+import { AdvisorPanel } from '@/components/dashboard/AdvisorPanel';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { CategoryManagement } from '@/components/categories/CategoryManagement';
@@ -74,6 +75,7 @@ export default function DashboardPage() {
           <div className="space-y-8">
             <DashboardSummary userId={userId} />
             <FinancialMemoryPanel userId={userId} />
+            <AdvisorPanel userId={userId} />
           </div>
         )}
 
