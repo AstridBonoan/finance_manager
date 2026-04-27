@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { DashboardSummary } from '@/components/dashboard/DashboardSummary';
 import { FinancialMemoryPanel } from '@/components/dashboard/FinancialMemoryPanel';
 import { AdvisorPanel } from '@/components/dashboard/AdvisorPanel';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { CategoryManagement } from '@/components/categories/CategoryManagement';
+import { CreditCard } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -26,8 +28,19 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Personal Finance Manager</h1>
-          <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.email}</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Personal Finance Manager</h1>
+              <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.email}</p>
+            </div>
+            <Link
+              href="/billing"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <CreditCard className="h-4 w-4" />
+              Billing
+            </Link>
+          </div>
         </div>
       </header>
 
