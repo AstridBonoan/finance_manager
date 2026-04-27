@@ -334,8 +334,19 @@
 **Goal:** AI-driven insights and recommendations.
 
 ### Sprint 6: OpenAI Integration
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 **Tasks:** AI endpoints, advisor chat, recommendations
+
+**✅ Completed in this session:**
+- Created Advisor module and registered it in API app module
+- Added advisor endpoints:
+  - `GET /advisor/insights`
+  - `POST /advisor/chat`
+- Implemented advisor context builder from live user financial data:
+  - Monthly income/expense/balance
+  - Top expense categories
+  - Financial memory signals (anomalies + habits)
+- Implemented structured local fallback advisor response path for phase-1 integration
 
 ---
 

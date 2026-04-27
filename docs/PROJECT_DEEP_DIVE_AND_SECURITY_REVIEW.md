@@ -281,4 +281,8 @@ Use this section for ongoing updates.
 - CI/GitHub Actions alignment:
   - Added missing API script used by workflow: `type-check`
   - Added API tsconfig path mappings so CI type-check resolves `@finance-app/shared` without requiring prebuilt shared dist
+- Sprint 6 kickoff:
+  - Added `AdvisorModule` with authenticated insights and chat endpoints
+  - Added financial context builder that composes transactions + financial memory outputs
+  - Added deterministic local fallback response path pending direct OpenAI API wiring
 
