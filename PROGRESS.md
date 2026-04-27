@@ -334,8 +334,25 @@
 **Goal:** AI-driven insights and recommendations.
 
 ### Sprint 6: OpenAI Integration
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 **Tasks:** AI endpoints, advisor chat, recommendations
+
+**✅ Completed in this session:**
+- Created Advisor module and registered it in API app module
+- Added advisor endpoints:
+  - `GET /advisor/insights`
+  - `POST /advisor/chat`
+- Implemented advisor context builder from live user financial data:
+  - Monthly income/expense/balance
+  - Top expense categories
+  - Financial memory signals (anomalies + habits)
+- Implemented structured local fallback advisor response path for phase-1 integration
+- Created AdvisorPanel frontend component:
+  - Financial insights display (income, expenses, balance, savings rate)
+  - Budget health and risk monitoring recommendations
+  - Top expense categories display
+  - AI chat interface for financial questions
+  - Integrated with dashboard page
 
 ---
 
@@ -357,7 +374,7 @@
 | 3 | 3 | 100% | 🟢 COMPLETE |
 | 4 | 4 | 100% | 🟢 COMPLETE |
 | 5 | 5 | 100% | 🟢 COMPLETE |
-| 6 | 6 | 0% | ⚪ Pending |
+| 6 | 6 | 75% | 🔄 IN PROGRESS |
 | 7 | 7 | 0% | ⚪ Pending |
 
 ---

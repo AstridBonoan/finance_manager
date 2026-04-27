@@ -9,6 +9,7 @@ import { BudgetsModule } from './modules/budgets/budgets.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { FinancialMemoryModule } from './modules/financial-memory/financial-memory.module';
+import { AdvisorModule } from './modules/advisor/advisor.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { FinancialMemoryModule } from './modules/financial-memory/financial-memo
     AllocationsModule,
     ReceiptsModule,
     FinancialMemoryModule,
+    AdvisorModule,
   ],
 })
 export class AppModule {}
