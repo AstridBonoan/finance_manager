@@ -168,7 +168,7 @@ export default function BillingPage() {
   };
 
   if (!session) {
-    redirect('/login');
+    redirect('/auth/sign-in');
   }
 
   if (loading) {
