@@ -1,3 +1,5 @@
+"use client";
+
 import AuthInput from "./AuthInput";
 import SocialButton from "./SocialButton";
 import AuthDivider from "./AuthDivider";
