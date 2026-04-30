@@ -55,6 +55,30 @@ export class BudgetsController {
     return this.budgetsService.getBudgetSummary(budgetId, user.id);
   }
 
+  @Get('monthly')
+  async getMonthlyBudget(
+    @Query('month') month: string,
+    @Query('year') year: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const m = Number(month);
+    const y = Number(year);
+    return this.budgetsService.getMonthlyBudget(user.id, m, y);
+  }
+
+  @Post('monthly')
+  async createMonthlyBudget(
+    @Body() body: { month: number; year: number; totalIncome: number },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.budgetsService.createMonthlyBudget(
+      user.id,
+      body.month,
+      body.year,
+      body.totalIncome,
+    );
+  }
+
   /**
    * GET /budgets/:id?userId=xxx
    * Get single allocation with progress

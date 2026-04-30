@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BalanceCard } from "@/components/finance/BalanceCard";
 import { InsightCard } from "@/components/finance/InsightCard";
 import { ReceiptItem } from "@/components/finance/ReceiptItem";
@@ -25,6 +26,7 @@ interface Receipt {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -32,6 +34,15 @@ export default function HomePage() {
   useEffect(() => {
     async function load() {
       try {
+        const categoriesRes = await apiFetch("/categories");
+        if (categoriesRes.ok) {
+          const categories = await categoriesRes.json();
+          if (!categories.length) {
+            router.replace("/onboarding");
+            return;
+          }
+        }
+
         const now = new Date();
         const query = new URLSearchParams({
           month: String(now.getMonth() + 1),
@@ -57,7 +68,7 @@ export default function HomePage() {
     }
 
     load();
-  }, []);
+  }, [router]);
 
   const income = dashboard?.totalIncome ?? 0;
   const expenses = dashboard?.totalExpenses ?? 0;

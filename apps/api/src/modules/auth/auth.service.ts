@@ -45,10 +45,16 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
-  async login(email: string, password: string) {
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+  async login(email: string | undefined, password: string, username?: string) {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedUsername = (username || '').trim();
+    const identifier = normalizedEmail || normalizedUsername;
+    if (!identifier) {
+      throw new UnauthorizedException('Email or username is required');
+    }
+
+    const user = await prisma.user.findFirst({
+      where: normalizedEmail ? { email: normalizedEmail } : { name: normalizedUsername },
       select: { id: true, email: true, passwordHash: true },
     });
 
@@ -66,10 +72,11 @@ export class AuthService {
     };
   }
 
-  async register(email: string, password: string) {
+  async register(email: string, password: string, username?: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !password || password.length < 8) {
-      throw new BadRequestException('Email and password (min 8 chars) are required');
+    const normalizedUsername = (username || '').trim();
+    if (!normalizedEmail || !password || password.length < 8 || !normalizedUsername) {
+      throw new BadRequestException('Email, username, and password (min 8 chars) are required');
     }
 
     const existing = await prisma.user.findUnique({
@@ -80,9 +87,18 @@ export class AuthService {
       throw new ConflictException('Email is already registered');
     }
 
+    const existingUsername = await prisma.user.findFirst({
+      where: { name: normalizedUsername },
+      select: { id: true },
+    });
+    if (existingUsername) {
+      throw new ConflictException('Username is already taken');
+    }
+
     const created = await prisma.user.create({
       data: {
         email: normalizedEmail,
+        name: normalizedUsername,
         passwordHash: this.hashPassword(password),
       },
       select: { id: true, email: true },

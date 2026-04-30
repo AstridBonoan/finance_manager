@@ -28,6 +28,33 @@ export interface BudgetProgress {
 
 @Injectable()
 export class BudgetsService {
+  async getMonthlyBudget(userId: string, month: number, year: number) {
+    const budget = await prisma.budget.findFirst({
+      where: { userId, month, year },
+      select: {
+        id: true,
+        userId: true,
+        month: true,
+        year: true,
+        totalIncome: true,
+        createdAt: true,
+      },
+    });
+
+    if (!budget) {
+      return null;
+    }
+
+    return {
+      id: budget.id,
+      userId: budget.userId,
+      month: budget.month,
+      year: budget.year,
+      totalIncome: budget.totalIncome.toNumber(),
+      createdAt: budget.createdAt,
+    };
+  }
+
 
   /**
    * Create allocation for a budget category
@@ -276,6 +303,22 @@ export class BudgetsService {
     year: number,
     totalIncome: number,
   ) {
+    const existing = await prisma.budget.findFirst({
+      where: { userId, month, year },
+      select: { id: true, userId: true, month: true, year: true, totalIncome: true, createdAt: true },
+    });
+
+    if (existing) {
+      return {
+        id: existing.id,
+        userId: existing.userId,
+        month: existing.month,
+        year: existing.year,
+        totalIncome: existing.totalIncome.toNumber(),
+        createdAt: existing.createdAt,
+      };
+    }
+
     const budget = await prisma.budget.create({
       data: {
         userId,

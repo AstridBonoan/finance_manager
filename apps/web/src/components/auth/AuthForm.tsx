@@ -48,8 +48,8 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
     if (!form.password.trim()) {
       errors.password = "Password is required.";
-    } else if (form.password.length < 6) {
-      errors.password = "Password must be at least 6 characters.";
+    } else if (form.password.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
     }
 
     if (mode === "signup") {

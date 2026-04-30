@@ -19,12 +19,23 @@ export default function BudgetPage() {
     async function load() {
       try {
         const now = new Date();
-        const response = await apiFetch(`/budget/allocations?month=${now.getMonth() + 1}&year=${now.getFullYear()}`);
+        const budgetRes = await apiFetch(`/budgets/monthly?month=${now.getMonth() + 1}&year=${now.getFullYear()}`);
+        if (!budgetRes.ok) {
+          return;
+        }
+
+        const budget = await budgetRes.json();
+        if (!budget?.id) {
+          return;
+        }
+
+        const response = await apiFetch(`/budgets?budgetId=${budget.id}`);
         if (!response.ok) {
           return;
         }
+
         const data = await response.json();
-        setAllocations(data.items ?? data.allocations ?? []);
+        setAllocations(data ?? []);
       } finally {
         setLoading(false);
       }

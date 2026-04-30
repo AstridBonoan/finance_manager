@@ -25,12 +25,13 @@ export const authOptions: NextAuthOptions = {
   providers: [
     Credentials({
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Email', type: 'text' },
+        username: { label: 'Username', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required');
+        if ((!credentials?.email && !credentials?.username) || !credentials?.password) {
+          throw new Error('Email or username and password are required');
         }
 
         try {
@@ -43,6 +44,7 @@ export const authOptions: NextAuthOptions = {
               },
               body: JSON.stringify({
                 email: credentials.email,
+                username: credentials.username,
                 password: credentials.password,
               }),
             }
